@@ -1,24 +1,32 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { Stack } from "expo-router";
+import { LogBox } from 'react-native';
+import './globals.css';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+// Suppress Reanimated strict-mode warnings that often originate
+// from third-party components. We ignore both the specific messages
+// and the `[Reanimated]` prefix so the Metro console isn't spammed.
+// If you prefer to fix the root cause, remove these lines and address
+// any shared-value `.value` reads/writes during render in the
+// offending components (see Reanimated docs).
+LogBox.ignoreLogs([
+  '[Reanimated]',
+  'Reanimated',
+  'Reading from `value` during component render',
+  'Writing to `value` during component render',
+]);
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  return <Stack>
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+    {/* Hiding the group rout (tabs) */}
+    <Stack.Screen
+    name= "(tabs)"
+    options={{ headerShown : false}}
+    />
+  {/*   we also wanna repeat it */}
+  <Stack.Screen
+   name= "movies/[id]"
+    options={{ headerShown : false}}
+  />
+  </Stack>
 }

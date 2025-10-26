@@ -1,17 +1,23 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "ignoreDeprecations": "6.0", // ✅ silences baseUrl deprecation
+    "baseUrl": ".",              // still works fine with Expo
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"],
+      "@/components/*": ["./components/*"],
+      "@/constants/*": ["./constants/*"],
+      "@/services/*": ["./services/*"],
+      "@/interfaces/*": ["./interfaces/*"]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
   ]
 }

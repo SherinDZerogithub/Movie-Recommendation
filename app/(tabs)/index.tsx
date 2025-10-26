@@ -1,98 +1,187 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import MovieCardd from "@/components/MovieCardd";
+import { icons } from "@/constants/icons";
+import { fetchPopularMovies } from "@/services/api";
+import { useFetch } from "@/services/useFetch";
+import { useRouter } from 'expo-router';
+import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+// Updated popular categories with proper genre mapping
+const popularCategories = [
+  { id: 1, name: "Horror", icon: "👻", genreId: 27 },
+  { id: 2, name: "Action", icon: "💥", genreId: 28 },
+  { id: 3, name: "Comedy", icon: "😂", genreId: 35 },
+  { id: 4, name: "Drama", icon: "🎭", genreId: 18 },
+  { id: 5, name: "Sci-Fi", icon: "🚀", genreId: 878 },
+  { id: 6, name: "Romance", icon: "💖", genreId: 10749 },
+  { id: 7, name: "Thriller", icon: "🔪", genreId: 53 },
+  { id: 8, name: "Fantasy", icon: "✨", genreId: 14 },
+];
 
-export default function HomeScreen() {
+// Sample movies data
+const sampleMovies = [
+  {
+    id: 640146,
+    title: "Ant-Man and the Wasp: Quantumania",
+    poster_path: "/nA5otwVxAfpBP4PVgeuBk3qHcLY.jpg",
+    vote_average: 6.5,
+    release_date: "2023-02-15",
+    popularity: 9200.005,
+    overview: "Superhero adventure in the Quantum Realm"
+  },
+  // ... other sample movies
+];
+
+export default function Index() {
+  const router = useRouter();
+  const { data: movies, loading:moviesLoading, error:moviesError } = useFetch(() => fetchPopularMovies({ query: '' }));
+  // Use sample data if API is not available
+  const displayMovies = movies && movies.length > 0 ? movies : sampleMovies;
+
+  const navigateToSearch = (category?: string) => {
+    if (category) {
+      router.push(`/search?category=${encodeURIComponent(category)}`);
+    } else {
+      router.push("/search");
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View className="flex-1 bg-primary">
+      {/* Modern gradient background */}
+      <View className="absolute inset-0 bg-gradient-to-b from-gray-900 via-purple-900/30 to-gray-900 z-0" />
+      
+      <ScrollView 
+        className="flex-1 px-6" 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={{ minHeight: "100%", paddingBottom: 30 }}
+      >
+        {/* Enhanced Header */}
+        <View className="items-center mt-16 mb-8">
+          <View className="bg-gradient-to-r from-purple-600 to-pink-600 p-1 rounded-2xl mb-4">
+            <View className="bg-gray-900/90 p-4 rounded-xl backdrop-blur-lg border border-white/10">
+              <Image source={icons.logo} className="w-16 h-14" />
+            </View>
+          </View>
+          <Text className="text-white text-3xl font-bold tracking-wider bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            CINEMATE
+          </Text>
+          <Text className="text-gray-400 text-lg mt-2 text-center">
+            Discover Amazing Movies
+          </Text>
+        </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {/* Search Button */}
+        <TouchableOpacity 
+          onPress={() => navigateToSearch()}
+          className="bg-white/10 rounded-2xl px-5 py-4 border border-white/20 backdrop-blur-lg active:scale-95 transition-all duration-200 mb-8"
+        >
+          <View className="flex-row items-center">
+            <Image 
+              source={icons.search} 
+              className='size-6' 
+              resizeMode='contain' 
+              tintColor="#8b5cf6" 
+            />
+            <View className="flex-1 ml-3">
+              <Text className="text-gray-400 text-lg font-medium">
+                Search for movies...
+              </Text>
+            </View>
+            <View className="bg-purple-500/20 p-2 rounded-lg">
+              <Text className="text-purple-400 text-sm font-semibold">Tap</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {moviesLoading ? (
+          <View className="flex-1 justify-center items-center mt-10">
+            <View className="bg-white/10 p-6 rounded-2xl backdrop-blur-lg border border-white/20">
+              <ActivityIndicator size="large" color="#8b5cf6" className="mb-4" />
+              <Text className="text-white text-lg font-semibold">Loading Movies</Text>
+              <Text className="text-white/60 text-center mt-2">
+                Preparing your cinematic experience...
+              </Text>
+            </View>
+          </View>
+        ) : moviesError ? (
+          <View className="flex-1 justify-center items-center mt-10 p-6">
+            <View className="bg-red-500/20 p-6 rounded-2xl border border-red-500/30 backdrop-blur-lg">
+              <Text className="text-white text-center text-xl font-bold mb-2">
+                🎬 Showing Sample Movies
+              </Text>
+              <Text className="text-white/70 text-center">
+                Using demo content - {displayMovies.length} movies loaded
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View className="flex-1">
+            {/* Popular Categories */}
+            <View className="mb-8">
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-2xl text-white font-bold">Browse by Genre</Text>
+                <TouchableOpacity onPress={() => navigateToSearch()}>
+                  <Text className="text-purple-400 text-sm font-semibold">View All</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                className="flex-row"
+                contentContainerStyle={{ gap: 12 }}
+              >
+                {popularCategories.map((category) => (
+                  <TouchableOpacity 
+                    key={category.id}
+                    onPress={() => navigateToSearch(category.name)}
+                    className="bg-white/10 px-4 py-3 rounded-xl border border-white/20 backdrop-blur-lg active:scale-95 transition-all duration-200"
+                  >
+                    <View className="flex-row items-center">
+                      <Text className="text-white text-lg mr-2">{category.icon}</Text>
+                      <Text className="text-white font-medium">{category.name}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Featured Movies Section */}
+            <View className="mt-4">
+              <View className="flex-row items-center justify-between mb-6">
+                <View>
+                  <Text className="text-2xl text-white font-bold tracking-tight">
+                    Trending Now
+                  </Text>
+                  <Text className="text-gray-400 text-base mt-1">
+                    Most popular movies this week
+                  </Text>
+                </View>
+                <View className="bg-white/10 px-4 py-2 rounded-full border border-white/20">
+                  <Text className="text-white text-sm font-semibold">
+                    {displayMovies?.length} titles
+                  </Text>
+                </View>
+              </View>
+
+              <FlatList
+                data={displayMovies}
+                renderItem={({ item }) => <MovieCardd {...item} />}
+                keyExtractor={(item) => item.id.toString()}
+                numColumns={3}
+                columnWrapperStyle={{
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  marginBottom: 20
+                }}
+                className="mt-2 pb-32"
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
