@@ -1,4 +1,4 @@
-import { Movie } from "@/interfaces/interface";
+import { Movie, MovieDetails } from "@/interfaces/interface";
 
 // 🌐 TMDB Configuration
 export const TMDB_CONFIG = {
@@ -113,4 +113,96 @@ export const fetchPopularMovies = async () => {
 
   const data = await response.json();
   return data.results;
+};
+
+
+export const fetchMovieDetails = async(movieId: string) : Promise<MovieDetails> => {
+  try {
+    const response = await fetch(`${TMDB_CONFIG.BASE_URL}/movie/${movieId}`, {
+      method: 'GET',
+      headers: TMDB_CONFIG.headers,
+    });
+    if(!response.ok) throw new Error("Failed to fetch movie details");
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching movie details:", error);
+    throw new Error("Failed to fetch movie details");    
+  }
+}
+
+// NEW: TV Show API functions
+export const fetchTVShows = async (category: string = 'popular', genreId?: number) => {
+  let endpoint = `${TMDB_CONFIG.BASE_URL}/tv/${category}`;
+  
+  // Add genre filter if provided
+  if (genreId) {
+    endpoint += endpoint.includes('?') ? `&with_genres=${genreId}` : `?with_genres=${genreId}`;
+  }
+  
+  const response = await fetch(endpoint, { headers: TMDB_CONFIG.headers });
+  if (!response.ok) throw new Error('Failed to fetch TV shows');
+  const data = await response.json();
+  return data.results;
+};
+
+// NEW: Anime API functions
+export const fetchAnime = async (category: string = 'popular', genreId?: number) => {
+  let endpoint = '';
+  
+  if (category === 'studio_ghibli') {
+    endpoint = `${TMDB_CONFIG.BASE_URL}/discover/movie?with_companies=10342`; // Studio Ghibli
+  } else {
+    endpoint = `${TMDB_CONFIG.BASE_URL}/discover/movie?with_genres=16&with_original_language=ja`;
+    
+    // Add specific anime filters based on category
+    if (category === 'top_rated') {
+      endpoint += '&sort_by=vote_average.desc&vote_count.gte=100';
+    } else if (category === 'upcoming') {
+      endpoint += '&sort_by=primary_release_date.desc';
+    } else if (category === 'popular') {
+      endpoint += '&sort_by=popularity.desc';
+    }
+  }
+  
+  // Add genre filter if provided
+  if (genreId) {
+    endpoint += endpoint.includes('?') ? `&with_genres=${genreId}` : `?with_genres=${genreId}`;
+  }
+  
+  const response = await fetch(endpoint, { headers: TMDB_CONFIG.headers });
+  if (!response.ok) throw new Error('Failed to fetch anime');
+  const data = await response.json();
+  return data.results;
+};
+
+// UPDATED: Unified fetchContent function
+export const fetchContent = async (
+  type: 'movie' | 'tv' | 'anime',
+  category: string,
+  genreId?: number
+) => {
+  if (type === 'movie') {
+    if (genreId) {
+      // For movies with genre filter, use discover endpoint
+      return fetch(`${TMDB_CONFIG.BASE_URL}/discover/movie?with_genres=${genreId}&sort_by=popularity.desc`, {
+        headers: TMDB_CONFIG.headers
+      })
+      .then(res => res.json())
+      .then(data => data.results || []);
+    } else {
+      // For movie categories, use the specific endpoint
+      return fetch(`${TMDB_CONFIG.BASE_URL}/movie/${category}`, {
+        headers: TMDB_CONFIG.headers
+      })
+      .then(res => res.json())
+      .then(data => data.results || []);
+    }
+  } else if (type === 'tv') {
+    return fetchTVShows(category, genreId);
+  } else if (type === 'anime') {
+    return fetchAnime(category, genreId);
+  }
+  
+  return [];
 };

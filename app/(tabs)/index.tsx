@@ -1,6 +1,8 @@
 import MovieCardd from "@/components/MovieCardd";
+import TrendingCard from "@/components/TrendingCard";
 import { icons } from "@/constants/icons";
 import { fetchPopularMovies } from "@/services/api";
+import { getTrendingMovies } from "@/services/appwrite";
 import { useFetch } from "@/services/useFetch";
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -33,10 +35,15 @@ const sampleMovies = [
 
 export default function Index() {
   const router = useRouter();
-  const { data: movies, loading:moviesLoading, error:moviesError } = useFetch(() => fetchPopularMovies({ query: '' }));
+  const { data: movies, loading:moviesLoading, error:moviesError } = useFetch(() => fetchPopularMovies());
   // Use sample data if API is not available
   const displayMovies = movies && movies.length > 0 ? movies : sampleMovies;
 
+  const {
+      data: trendingMovies,
+      loading:trendingLoading,
+      error: trendingError
+  } =useFetch(getTrendingMovies)
   const navigateToSearch = (category?: string) => {
     if (category) {
       router.push(`/search?category=${encodeURIComponent(category)}`);
@@ -93,7 +100,27 @@ export default function Index() {
           </View>
         </TouchableOpacity>
 
-        {moviesLoading ? (
+        {trendingMovies &&
+        (
+          <View className="mt-10 ">
+            <Text className="tet-lg text-white font-bold"> Trending Movies </Text>
+          <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View className="w-4 " /> }
+          className="mb-4 mt-3 "
+             data={trendingMovies} 
+             renderItem={({item, index}) => 
+             ( <TrendingCard movie={item}  index={index}/> )
+              }
+          keyExtractor={(item) => item.movie_id.toString()}
+          />
+          
+          </View>
+        )
+        }
+
+        {moviesLoading || trendingLoading ? (
           <View className="flex-1 justify-center items-center mt-10">
             <View className="bg-white/10 p-6 rounded-2xl backdrop-blur-lg border border-white/20">
               <ActivityIndicator size="large" color="#8b5cf6" className="mb-4" />
@@ -103,7 +130,7 @@ export default function Index() {
               </Text>
             </View>
           </View>
-        ) : moviesError ? (
+        ) : moviesError || trendingError ? (
           <View className="flex-1 justify-center items-center mt-10 p-6">
             <View className="bg-red-500/20 p-6 rounded-2xl border border-red-500/30 backdrop-blur-lg">
               <Text className="text-white text-center text-xl font-bold mb-2">

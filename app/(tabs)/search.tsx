@@ -1,15 +1,16 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 // ✅ Consistent imports - all relative
+import { updatSearchCount } from '@/services/appwrite';
 import MovieCardd from '../../components/MovieCardd';
 import SearchBar from '../../components/SearchBar';
 import { icons } from '../../constants/icons';
 import { images } from '../../constants/images';
+import { Movie } from '../../interfaces/interface';
 import { fetchPopularMovies, fetchRatedMovies } from "../../services/api";
 import { useFetch } from '../../services/useFetch';
-import { Movie } from '../../interfaces/interface';
 
 // Search suggestions
 const searchSuggestions = [
@@ -40,20 +41,31 @@ const Search = () => {
   // Get the decade object if selected
   const decadeObj = selectedDecade ? decades.find(d => d.id === selectedDecade) : undefined;
 
-  // 🔹 Fetch popular movies
+  // 🔹 Fetch popular movies (only when no search query)
   const { data: popularContent, loading: popularLoading, error: popularError } = useFetch(() => 
-    fetchPopularMovies() // No mediaType parameter needed
+    fetchPopularMovies(),
+    [],
+    !searchQuery.trim() // Only auto-fetch when no search query
   );
 
-  // 🔹 Fetch search results with ratings (movies only)
+  // 🔹 Fetch search results with decade filter for ALL search types
   const { data: movies, loading: moviesLoading, error: moviesError, refetch, reset } = useFetch<Movie[]>(
-    () => fetchRatedMovies({ 
-      query: searchQuery, 
-      decade: decadeObj
-      // No mediaType parameter - defaults to movies
-    }),
-    [searchQuery, selectedDecade]
+    () => {
+      if (!searchQuery.trim()) {
+        // If no search query, return empty array
+        return Promise.resolve([]);
+      }
+      return fetchRatedMovies({ 
+        query: searchQuery, 
+        decade: decadeObj
+      });
+    },
+    [searchQuery, selectedDecade], // Re-fetch when search query or decade changes
+    !!searchQuery.trim() // Only auto-fetch when there's a search query
   );
+
+  // Keep track of the last search query we updated in the DB to avoid duplicate writes
+  const lastUpdatedQueryRef = useRef<string | null>(null);
 
   useEffect(() => {
     // If category is passed from home page, set it as search query
@@ -61,7 +73,35 @@ const Search = () => {
       setSearchQuery(category);
       setActiveCategory(category);
     }
-  }, [category]);
+  }, [category, searchQuery]);
+
+  // Debounced effect for search analytics
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const q = searchQuery.trim();
+
+      if (!q) {
+        // If query cleared, reset results and last-updated marker
+        reset();
+        lastUpdatedQueryRef.current = null;
+        return;
+      }
+
+      // If results are still loading, wait for them
+      if (moviesLoading) return;
+
+      // Only update when we have results and we haven't already updated for this exact query
+      if (movies && movies.length > 0 && movies[0] && lastUpdatedQueryRef.current !== q) {
+        // fire-and-forget; we don't need to block rendering for this
+        updatSearchCount(q, movies[0]).catch(err => {
+          console.error('Failed to update search count:', err);
+        });
+        lastUpdatedQueryRef.current = q;
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, moviesLoading, movies, reset]);
 
   const clearSearch = () => {
     reset();
@@ -71,13 +111,6 @@ const Search = () => {
   };
 
   const clearDecade = () => {
-    setSelectedDecade(null);
-  };
-
-  const handleSuggestionPress = (suggestion: string) => {
-    reset();
-    setSearchQuery(suggestion);
-    setActiveCategory(suggestion);
     setSelectedDecade(null);
   };
 
@@ -92,6 +125,12 @@ const Search = () => {
     setSelectedDecade(decadeId === selectedDecade ? null : decadeId);
   };
 
+  // Determine which data to display
+  const displayData = searchQuery.trim() ? movies : popularContent;
+
+  // Only show decade filter for genre searches
+  const isGenreSearch = searchSuggestions.map(s => s.toLowerCase()).includes(searchQuery.trim().toLowerCase());
+
   const renderMovieItem = ({ item }: { item: Movie }) => (
     <MovieCardd {...item} />
   );
@@ -101,7 +140,7 @@ const Search = () => {
       <Image source={images.bg} className='flex-1 absolute w-full z-0 opacity-20' />
       
       <FlatList 
-        data={searchQuery.trim() ? movies : popularContent}
+        data={displayData}
         renderItem={renderMovieItem}
         keyExtractor={(item: Movie) => item.id.toString()}
         className='px-6'
@@ -136,7 +175,6 @@ const Search = () => {
                   setSearchQuery(text);
                   if (text !== category) {
                     setActiveCategory('');
-                    setSelectedDecade(null);
                   }
                 }} 
                 value={searchQuery}
@@ -157,47 +195,42 @@ const Search = () => {
             {(activeCategory || selectedDecade) && (
               <View className="mb-4 bg-purple-500/20 px-4 py-3 rounded-xl border border-purple-500/30">
                 <Text className="text-white text-lg font-semibold text-center">
-                  Showing{' '}
-                  {activeCategory ? (
-                    <Text className="text-purple-400">{activeCategory}</Text>
-                  ) : selectedDecade ? (
-                    <Text className="text-purple-400">
-                      Movies from {decades.find(d => d.id === selectedDecade)?.name}
-                    </Text>
-                  ) : null}
-
-                  {activeCategory && selectedDecade ? (
+                  {searchQuery.trim() ? (
                     <>
-                      {' '}from{' '}
-                      <Text className="text-purple-400">
-                        {decades.find(d => d.id === selectedDecade)?.name}
-                      </Text>
+                      Showing{' '}
+                      {activeCategory ? (
+                        <Text className="text-purple-400">{activeCategory}</Text>
+                      ) : (
+                        <Text className="text-purple-400">{searchQuery}</Text>
+                      )}
+                      {selectedDecade && (
+                        <>
+                          {' '}from{' '}
+                          <Text className="text-purple-400">
+                            {decades.find(d => d.id === selectedDecade)?.name}
+                          </Text>
+                        </>
+                      )}
                     </>
-                  ) : null}
+                  ) : (
+                    <Text className="text-purple-400">
+                      {activeCategory} movies
+                      {selectedDecade && ` from ${decades.find(d => d.id === selectedDecade)?.name}`}
+                    </Text>
+                  )}
                 </Text>
 
-                {(activeCategory || selectedDecade) && (
-                  <TouchableOpacity 
-                    onPress={clearSearch}
-                    className="bg-white/10 px-3 py-1 rounded-lg self-center mt-2 active:scale-95"
-                  >
-                    <Text className="text-white text-sm font-semibold">Clear All</Text>
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity 
+                  onPress={clearSearch}
+                  className="bg-white/10 px-3 py-1 rounded-lg self-center mt-2 active:scale-95"
+                >
+                  <Text className="text-white text-sm font-semibold">Clear All</Text>
+                </TouchableOpacity>
               </View>
             )}
 
-            {/* Sorting Indicator */}
-            {(activeCategory || searchQuery.trim()) && !moviesLoading && (
-              <View className="mb-4 bg-green-500/20 px-4 py-2 rounded-xl border border-green-500/30">
-                <Text className="text-green-400 text-sm font-semibold text-center">
-                  🏆 Sorted by Highest Ratings
-                </Text>
-              </View>
-            )}
-
-            {/* Decades Filter */}
-            {!moviesLoading && searchQuery.trim() && (
+            {/* Decades Filter - Only show for genre searches */}
+            {isGenreSearch && searchQuery.trim() && (
               <View className="mb-6">
                 <View className="flex-row items-center justify-between mb-3">
                   <Text className="text-white text-lg font-bold">Filter by Decade</Text>
@@ -207,7 +240,6 @@ const Search = () => {
                     </TouchableOpacity>
                   )}
                 </View>
-                
                 <ScrollView 
                   horizontal 
                   showsHorizontalScrollIndicator={false}
@@ -236,7 +268,7 @@ const Search = () => {
                   ))}
                 </ScrollView>
 
-                {selectedDecade && !moviesLoading && (
+                {selectedDecade && !moviesLoading && searchQuery.trim() && (
                   <Text className="text-gray-400 text-sm mt-2 text-center">
                     Showing {movies?.length || 0} movies from {decades.find(d => d.id === selectedDecade)?.name}
                   </Text>
@@ -244,8 +276,17 @@ const Search = () => {
               </View>
             )}
 
+            {/* Sorting Indicator - Show for ALL searches */}
+            {(activeCategory || searchQuery.trim()) && !moviesLoading && (
+              <View className="mb-4 bg-green-500/20 px-4 py-2 rounded-xl border border-green-500/30">
+                <Text className="text-green-400 text-sm font-semibold text-center">
+                  🏆 Sorted by Highest Ratings
+                </Text>
+              </View>
+            )}
+
             {/* 🔹 Popular Content when NO search query */}
-            {!searchQuery.trim() && !moviesLoading && (
+            {!searchQuery.trim() && !popularLoading && (
               <>
                 {/* Suggestions Section */}
                 <View className="mb-8">
@@ -272,7 +313,7 @@ const Search = () => {
                 </View>
 
                 {/* Popular Movies Section - Only shows when no search */}
-                {!popularLoading && popularContent && popularContent.length > 0 && (
+                {popularContent && popularContent.length > 0 && (
                   <View className="mb-8">
                     <View className="flex-row items-center justify-between mb-4">
                       <Text className="text-white text-xl font-bold">🔥 Popular Movies Now</Text>
@@ -306,7 +347,7 @@ const Search = () => {
               </>
             )}
 
-            {/* 🔹 SEARCH RESULTS SECTION - Only shows when there's a search query */}
+            {/* 🔹 SEARCH RESULTS SECTION - Shows when there's ANY search query */}
             {searchQuery.trim() && (
               <>
                 {/* Loading State for Search */}
@@ -316,7 +357,7 @@ const Search = () => {
                     <Text className="text-white ml-3 text-lg">
                       {activeCategory 
                         ? `Loading ${activeCategory} movies${selectedDecade ? ` from ${decades.find(d => d.id === selectedDecade)?.name}` : ''}...` 
-                        : `Searching movies${selectedDecade ? ` from ${decades.find(d => d.id === selectedDecade)?.name}` : ''}...`
+                        : `Searching "${searchQuery}"${selectedDecade ? ` from ${decades.find(d => d.id === selectedDecade)?.name}` : ''}...`
                       }
                     </Text>
                   </View>
@@ -354,7 +395,7 @@ const Search = () => {
                     <Text className="text-white text-2xl font-bold mb-2">No Results Found</Text>
                     <Text className="text-gray-400 text-center text-lg">
                       {selectedDecade 
-                        ? `No ${activeCategory || ''} movies found from ${decades.find(d => d.id === selectedDecade)?.name}. Try a different decade.`
+                        ? `No ${activeCategory || searchQuery} movies found from ${decades.find(d => d.id === selectedDecade)?.name}. Try a different decade.`
                         : `No movies found for "${searchQuery}". Try different keywords.`}
                     </Text>
                     <TouchableOpacity 

@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { LogBox } from 'react-native';
+import { LogBox, StatusBar } from 'react-native';
 import './globals.css';
 
 // Suppress Reanimated strict-mode warnings that often originate
@@ -16,8 +16,12 @@ LogBox.ignoreLogs([
 ]);
 
 export default function RootLayout() {
-  return <Stack>
+  return(
 
+    <>
+  <Stack>
+    {/* Hiding the status bar - batri, wifi, date bar for a more immersive experience */}
+    <StatusBar hidden={true} />
     {/* Hiding the group rout (tabs) */}
     <Stack.Screen
     name= "(tabs)"
@@ -26,7 +30,9 @@ export default function RootLayout() {
   {/*   we also wanna repeat it */}
   <Stack.Screen
    name= "movies/[id]"
-    options={{ headerShown : false}}
-  />
+   options={{ headerShown : false}}
+   />
   </Stack>
+   </>
+  )
 }

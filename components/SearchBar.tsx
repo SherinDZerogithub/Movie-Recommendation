@@ -2,6 +2,7 @@ import { icons } from '@/constants/icons';
 import React from 'react';
 import { Image, TextInput, TouchableOpacity, View } from 'react-native';
 
+// the ones with the ? are optional properties
 interface Props {
     placeholder: string;
     onPress?: () => void;

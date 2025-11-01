@@ -81,11 +81,11 @@ const _layout = () => {
         }}
       />
       <Tabs.Screen
-        name="saved"
+          name="discover"
         options={{
-          title: 'Saved',
+          title: 'discover',
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={icons.save} title="Saved" />
+            <TabIcon focused={focused} icon={icons.arrow} title="Discover" />
           ),
         }}
       />
@@ -94,7 +94,7 @@ const _layout = () => {
         options={{
           title: 'Profile',
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={icons.person} title="Profile" />
+            <TabIcon focused={focused} icon={icons.star} title="Watchlist" />
           ),
         }}
       />
