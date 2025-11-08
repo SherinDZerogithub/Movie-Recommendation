@@ -11,41 +11,62 @@
 //it returns a promise that resolves to type T
 //T maakes the hook flexible and reusable for different data types
 
-import { useEffect, useState } from "react";
+// hooks/useFetch.ts
+import { useCallback, useEffect, useRef, useState } from "react";
+
+interface UseFetchReturn<T> {
+  data: T | null;
+  loading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+  reset: () => void;
+}
 
 export const useFetch = <T>(
   fetchFunction: () => Promise<T>,
-  deps: any[] = [], // ✅ dependencies array for refetching
+  deps: any[] = [],
   autoFetch = true
-) => {
+): UseFetchReturn<T> => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const isMounted = useRef(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const result = await fetchFunction();
-      setData(result);
-    } catch (error) {
-      setError(error instanceof Error ? error : new Error("Unknown error"));
+      if (isMounted.current) {
+        setData(result);
+      }
+    } catch (err) {
+      if (isMounted.current) {
+        setError(err instanceof Error ? err : new Error("Unknown error"));
+      }
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, [fetchFunction]);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setData(null);
     setError(null);
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
+    isMounted.current = true;
+    
     if (autoFetch) {
       fetchData();
     }
-    // ✅ now it listens to dependencies
+
+    return () => {
+      isMounted.current = false;
+    };
   }, deps);
 
   return { data, loading, error, refetch: fetchData, reset };

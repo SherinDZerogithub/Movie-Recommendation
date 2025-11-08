@@ -1,12 +1,14 @@
-import { Movie, MovieDetails } from "@/interfaces/interface";
+import { Movie, MovieDetails, TVShowDetails } from "@/interfaces/interface";
 
 // 🌐 TMDB Configuration
+import Constants from 'expo-constants';
+
 export const TMDB_CONFIG = {
   BASE_URL: "https://api.themoviedb.org/3",
-  API_KEY: process.env.EXPO_PUBLIC_TMDB_API_KEY,
+  API_KEY: Constants.expoConfig?.extra?.TMDB_API_KEY || process.env.EXPO_PUBLIC_TMDB_API_KEY,
   headers: {
     accept: "application/json",
-    Authorization: `Bearer ${process.env.EXPO_PUBLIC_TMDB_API_KEY}`,
+    Authorization: `Bearer ${Constants.expoConfig?.extra?.TMDB_API_KEY || process.env.EXPO_PUBLIC_TMDB_API_KEY}`,
   },
 };
 
@@ -118,16 +120,55 @@ export const fetchPopularMovies = async () => {
 
 export const fetchMovieDetails = async(movieId: string) : Promise<MovieDetails> => {
   try {
+    if (!TMDB_CONFIG.API_KEY) {
+      throw new Error("TMDB API key is not configured. Please check your environment variables.");
+    }
+
     const response = await fetch(`${TMDB_CONFIG.BASE_URL}/movie/${movieId}`, {
       method: 'GET',
       headers: TMDB_CONFIG.headers,
     });
-    if(!response.ok) throw new Error("Failed to fetch movie details");
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.status_message || 
+        `Failed to fetch movie details (Status: ${response.status})`
+      );
+    }
+
     const data = await response.json();
     return data;
   } catch (error) {
     console.error("Error fetching movie details:", error);
-    throw new Error("Failed to fetch movie details");    
+    throw error instanceof Error ? error : new Error("Failed to fetch movie details");    
+  }
+}
+
+export const fetchTVShowDetails = async(tvId: string) : Promise<TVShowDetails> => {
+  try {
+    if (!TMDB_CONFIG.API_KEY) {
+      throw new Error("TMDB API key is not configured. Please check your environment variables.");
+    }
+
+    const response = await fetch(`${TMDB_CONFIG.BASE_URL}/tv/${tvId}?append_to_response=credits,videos`, {
+      method: 'GET',
+      headers: TMDB_CONFIG.headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.status_message || 
+        `Failed to fetch TV show details (Status: ${response.status})`
+      );
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching TV show details:", error);
+    throw error instanceof Error ? error : new Error("Failed to fetch TV show details");    
   }
 }
 
@@ -206,3 +247,4 @@ export const fetchContent = async (
   
   return [];
 };
+

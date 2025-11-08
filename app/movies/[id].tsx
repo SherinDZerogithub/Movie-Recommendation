@@ -21,7 +21,11 @@ const MovieDetails = () => {
   
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const { data: movie, loading, error } = useFetch(() => fetchMovieDetails(id as string));
+const movieId = id ? String(id) : null;
+const { data: movie, loading, error } = useFetch(
+  movieId ? () => fetchMovieDetails(movieId) : null
+);
+
 
   if (loading) {
     return (
@@ -86,11 +90,12 @@ const MovieDetails = () => {
         <View style={{ width: screenWidth, height: screenHeight * 0.55 }} className="relative">
           <Image
             source={{
-              uri: movie.backdrop_path
-                ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
-                : movie.poster_path
-                ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
-                : 'https://via.placeholder.com/780x439/000000/ffffff?text=No+Image',
+            uri: movie.backdrop_path
+  ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
+  : movie.poster_path
+  ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
+  : 'https://via.placeholder.com/780x439/000000/ffffff?text=No+Image',
+
             }}
             style={{
               width: screenWidth,

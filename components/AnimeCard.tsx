@@ -1,20 +1,21 @@
-// components/TVShowCard.tsx
+// components/AnimeCard.tsx
 import { Movie } from '@/interfaces/interface'
 import React, { useState } from 'react'
-import { 
-  Dimensions, 
-  Image, 
-  Text, 
-  TouchableOpacity, 
-  View 
+import {
+    Dimensions,
+    Image,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native'
 import MovieDetailsOverlay from './MovieDetailsOverlay'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
-interface TVShowCardProps extends Movie {
+interface AnimeCardProps extends Movie {
   onPress?: () => void;
   size?: 'small' | 'medium' | 'large';
+  isGhibli?: boolean;
 }
 
 const SIZE_CONFIG = {
@@ -23,20 +24,21 @@ const SIZE_CONFIG = {
   large: { width: SCREEN_WIDTH * 0.45, height: 220 }
 }
 
-const TVShowCard = ({ 
+const AnimeCard = ({ 
   id, 
   poster_path, 
-  name,
+  title,
   vote_average, 
-  first_air_date,
+  release_date,
   onPress,
-  size = 'medium'
-}: TVShowCardProps) => {
+  size = 'medium',
+  isGhibli = false
+}: AnimeCardProps) => {
   const [showDetails, setShowDetails] = useState(false)
   const [imageError, setImageError] = useState(false)
 
   const config = SIZE_CONFIG[size];
-  const year = first_air_date?.split('-')[0] || 'N/A';
+  const year = release_date?.split('-')[0] || 'N/A';
 
   const handlePress = () => {
     setShowDetails(true);
@@ -54,11 +56,6 @@ const TVShowCard = ({
   const imageUrl = imageError || !poster_path 
     ? 'https://via.placeholder.com/150x225/1a1a1a/ffffff?text=No+Image'
     : `https://image.tmdb.org/t/p/w500${poster_path}`;
-
-  const getSeasonInfo = () => {
-    // This would typically come from TV show specific API
-    return '2 Seasons';
-  };
 
   return (
     <>
@@ -80,9 +77,11 @@ const TVShowCard = ({
             onError={handleImageError}
           />
           
-          {/* TV Show Badge */}
-          <View className="absolute top-2 left-2 bg-blue-600 px-2 py-1 rounded-full">
-            <Text className="text-white text-xs font-bold">TV</Text>
+          {/* Anime Badge */}
+          <View className="absolute top-2 left-2 bg-red-600 px-2 py-1 rounded-full">
+            <Text className="text-white text-xs font-bold">
+              {isGhibli ? 'Ghibli' : 'Anime'}
+            </Text>
           </View>
 
           {/* Rating badge */}
@@ -101,16 +100,18 @@ const TVShowCard = ({
             className="text-white font-bold text-sm leading-tight"
             numberOfLines={2}
           >
-            {name}
+            {title}
           </Text>
           
           <View className="flex-row items-center justify-between mt-1">
             <Text className="text-xs text-gray-400 font-medium">
               {year}
             </Text>
-            <Text className="text-xs text-blue-400 font-medium">
-              {getSeasonInfo()}
-            </Text>
+            <View className="flex-row items-center">
+              <Text className="text-xs text-red-400 font-medium">
+                🇯🇵 Japanese
+              </Text>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -119,10 +120,10 @@ const TVShowCard = ({
         movieId={id.toString()}
         isVisible={showDetails}
         onClose={handleCloseDetails}
-        mediaType="tv"
+        mediaType="anime"
       />
     </>
   )
 }
 
-export default TVShowCard;
+export default AnimeCard;

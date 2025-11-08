@@ -1,38 +1,88 @@
+// app/_layout.tsx (add this screen)
 import { Stack } from "expo-router";
-import { LogBox, StatusBar } from 'react-native';
+import { StatusBar } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import './globals.css';
 
-// Suppress Reanimated strict-mode warnings that often originate
-// from third-party components. We ignore both the specific messages
-// and the `[Reanimated]` prefix so the Metro console isn't spammed.
-// If you prefer to fix the root cause, remove these lines and address
-// any shared-value `.value` reads/writes during render in the
-// offending components (see Reanimated docs).
-LogBox.ignoreLogs([
-  '[Reanimated]',
-  'Reanimated',
-  'Reading from `value` during component render',
-  'Writing to `value` during component render',
-]);
+// ... existing code ...
 
 export default function RootLayout() {
-  return(
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <StatusBar 
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent={true}
+      />
+      
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          contentStyle: { backgroundColor: '#000000' },
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+        }}
+      >
+        {/* Main tabs */}
+        <Stack.Screen
+          name="(tabs)"
+          options={{ 
+            headerShown: false,
+            animation: 'fade',
+          }}
+        />
+        
+        {/* Movie details screen */}
+        <Stack.Screen
+          name="movies/[id]"
+          options={{ 
+            headerShown: false,
+            presentation: 'card',
+            animation: 'slide_from_bottom',
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
+          }}
+        />
 
-    <>
-  <Stack>
-    {/* Hiding the status bar - batri, wifi, date bar for a more immersive experience */}
-    <StatusBar hidden={true} />
-    {/* Hiding the group rout (tabs) */}
-    <Stack.Screen
-    name= "(tabs)"
-    options={{ headerShown : false}}
-    />
-  {/*   we also wanna repeat it */}
-  <Stack.Screen
-   name= "movies/[id]"
-   options={{ headerShown : false}}
-   />
-  </Stack>
-   </>
-  )
+        {/* TV Show details screen */}
+        <Stack.Screen
+          name="tv/[id]"
+          options={{ 
+            headerShown: false,
+            presentation: 'card',
+            animation: 'slide_from_bottom',
+            gestureEnabled: true,
+          }}
+        />
+
+        {/* Search screen */}
+        <Stack.Screen
+          name="search"
+          options={{ 
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+
+        {/* Discover screen */}
+        <Stack.Screen
+          name="discover"
+          options={{ 
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+
+        {/* NEW: Surprise Me screen - Public access */}
+        <Stack.Screen
+          name="surprise"
+          options={{ 
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+      </Stack>
+    </GestureHandlerRootView>
+  );
 }
