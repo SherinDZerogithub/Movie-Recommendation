@@ -1,233 +1,263 @@
-# CINEMATE Movie Recommendation — README Rewrite and Repository Review
+# 🎬 CINEMATE
 
-## Research findings
+### Discover movies. Explore shows. Find your next favorite.
 
-The repository’s current `README.md` is still essentially the default `create-expo-app` starter document: it explains `npm install`, `npx expo start`, the Expo development targets, and `npm run reset-project`, but it does not describe what this project has actually become. citeturn18view0
+**CINEMATE** is a movie recommendation and discovery application built with **React Native** and **Expo**.
 
-The application itself is substantially more developed. The home screen brands the product as **CINEMATE** with the tagline “Discover Amazing Movies,” and it includes search access plus a “Trending Now” section based on titles most searched by users. citeturn19view0 The bottom navigation contains **Home, Search, Discover, and Surprise** tabs. citeturn18view3
+The app allows users to explore popular movies, TV shows, and anime, search for titles using filters, discover trending searches, and get random recommendations when they don't know what to watch.
 
-The repository currently uses Expo Router with Expo SDK 54, React 19.1, React Native 0.81.4, NativeWind, Appwrite, React Native Reanimated, Gesture Handler, and other Expo/React Native packages. citeturn18view1
+---
 
-The actual feature set is also much broader than the old README suggests. Search supports genre shortcuts and decade filtering from the 1970s through the 2020s, and search analytics are debounced for 500 ms before being written to Appwrite. citeturn19view2turn20view1 Discover supports **Movies, TV Shows, and Anime**, with popular/top-rated filters and a Studio Ghibli option for anime. citeturn19view1 The Surprise feature combines popular movies, TV shows, and anime and selects a random recommendation; it also supports sharing the recommendation through React Native's native share API. citeturn20view2
+## ✨ Features
 
-I therefore rewrote the README around the application that actually exists rather than around the original Expo template.
+### 🏠 Home
 
-## Rewritten README
+- Browse popular movies
+- View trending searches
+- Quickly access movie details
+- Clean and responsive mobile interface
 
-The replacement `README.md` is ready to use:
+### 🔎 Smart Search
 
-**[Download the rewritten README.md](sandbox:/mnt/data/README.md)**
+Search for movies and narrow down results using:
 
-The new document is structured around **CINEMATE — Movie Recommendation App** and includes:
+- Genre filters
+- Decade filters
+- Search suggestions
+- TMDB movie data
 
-- a project-specific overview rather than Expo boilerplate;
-- the actual feature set discovered from the source code;
-- the current technology stack;
-- an architecture/project-structure overview;
-- installation and startup instructions;
-- required TMDB and Appwrite environment variables;
-- Appwrite collection fields used by the existing implementation;
-- explanations of Home, Search, Discover, and Surprise Me;
-- security guidance for `EXPO_PUBLIC_*` environment variables;
-- TMDB attribution requirements;
-- available npm scripts;
-- suggested future improvements;
-- contribution guidance; and
-- a license-status note.
+Available decade filters include:
 
-The technology/version information in that README comes directly from the repository's `package.json`, including Expo `~54.0.13`, Expo Router `~6.0.11`, React `19.1.0`, React Native `0.81.4`, Appwrite `^21.2.1`, NativeWind `^4.2.1`, and Tailwind CSS `^3.4.18`. citeturn18view1
+`1970s` • `1980s` • `1990s` • `2000s` • `2010s` • `2020s`
 
-## Configuration details the README now gets right
+Search activity is also tracked using **Appwrite** to generate trending movie searches.
 
-### TMDB authentication
+### 🌎 Discover
 
-The current application reads:
+Explore entertainment across different categories:
 
-```env
-EXPO_PUBLIC_TMDB_API_KEY=...
+- 🎬 Movies
+- 📺 TV Shows
+- 🌸 Anime
+
+Content can be explored using options such as:
+
+- Popular
+- Top Rated
+- Studio Ghibli anime
+
+### 🎲 Surprise Me
+
+Can't decide what to watch?
+
+The **Surprise Me** feature randomly selects a recommendation from movies, TV shows, or anime.
+
+You can also share the recommendation directly from the app.
+
+---
+
+## 🛠️ Tech Stack
+
+CINEMATE is built using:
+
+| Technology | Purpose |
+| --- | --- |
+| React Native | Mobile application development |
+| Expo | Development and build platform |
+| Expo Router | File-based navigation |
+| TypeScript | Type-safe JavaScript |
+| NativeWind | Tailwind-style React Native styling |
+| Tailwind CSS | Styling utilities |
+| TMDB API | Movie and TV data |
+| Appwrite | Search analytics and trending data |
+| React Native Reanimated | Animations |
+| React Native Gesture Handler | Gesture support |
+
+---
+
+## 📱 Main Navigation
+
+The application contains four main sections:
+
+```text
+Home
+├── Popular Movies
+└── Trending Searches
+
+Search
+├── Search Movies
+├── Genre Filters
+└── Decade Filters
+
+Discover
+├── Movies
+├── TV Shows
+└── Anime
+
+Surprise
+├── Random Recommendation
+└── Share Recommendation
 ```
 
-but the source does **not** send that value as the `api_key` query parameter. Instead, it constructs:
+---
 
-```ts
-Authorization: `Bearer ${...}`
+## 📂 Project Structure
+
+```text
+Movie-Recommendation/
+│
+├── app/                 # Application screens and routes
+│
+├── assets/              # Images, icons and other assets
+│
+├── components/          # Reusable UI components
+│
+├── constants/           # Application constants
+│
+├── interfaces/          # TypeScript interfaces
+│
+├── services/            # API and Appwrite services
+│
+├── app.json             # Expo configuration
+├── package.json         # Dependencies and scripts
+├── tailwind.config.js   # Tailwind configuration
+└── tsconfig.json        # TypeScript configuration
 ```
 
-against TMDB's API. citeturn20view0
+---
 
-That distinction matters. TMDB's official documentation says its v3 API can use either an `api_key` query parameter or an access token as a Bearer token, and identifies the **API Read Access Token** as the token intended for the `Authorization` header. citeturn17view7
+## 🚀 Getting Started
 
-For that reason, the rewritten README deliberately says:
+### 1. Clone the repository
+
+Clone the project to your computer and open the project directory.
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment variables
+
+Create a `.env` file in the root directory.
 
 ```env
 EXPO_PUBLIC_TMDB_API_KEY=your_tmdb_api_read_access_token
+
+EXPO_PUBLIC_APPWRITE_ENDPOINT=your_appwrite_endpoint
+EXPO_PUBLIC_APPWRITE_PROJECT_ID=your_project_id
+EXPO_PUBLIC_APPWRITE_DATABASE_ID=your_database_id
+EXPO_PUBLIC_APPWRITE_USERS_COLLECTION_ID=your_collection_id
 ```
 
-rather than telling developers to paste an ordinary v3 API-key string into a Bearer header.
+> **Important:** Variables beginning with `EXPO_PUBLIC_` are included in the client application. Do not use them for sensitive production secrets.
 
-### Appwrite configuration
+The current project uses the TMDB API Read Access Token as a Bearer token when making requests.
 
-The code requires these public environment variables:
+---
 
-```env
-EXPO_PUBLIC_APPWRITE_ENDPOINT=...
-EXPO_PUBLIC_APPWRITE_PROJECT_ID=...
-EXPO_PUBLIC_APPWRITE_DATABASE_ID=...
-EXPO_PUBLIC_APPWRITE_USERS_COLLECTION_ID=...
-```
+## 🗄️ Appwrite Setup
 
-The Appwrite service queries the collection for an existing search term, increments its `count` when found, otherwise creates a document containing the search term, movie ID, title, count, and poster URL. Trending movies are then retrieved by limiting the query to five documents ordered by descending `count`. citeturn18view2
+Appwrite is used to store search activity and determine which movies are trending based on user searches.
 
-I consequently documented the database schema expected by the current source:
+The current implementation expects the collection to contain fields similar to:
 
-| Attribute | Suggested type | Used for |
-|---|---|---|
-| `searchTearm` | String | Search query |
+| Field | Type | Description |
+| --- | --- | --- |
+| `searchTearm` | String | User's search query |
 | `movie_id` | Integer | TMDB movie ID |
 | `title` | String | Movie title |
-| `count` | Integer | Search count |
-| `poster_url` | String | Poster image URL |
+| `count` | Integer | Number of searches |
+| `poster_url` | String | Movie poster URL |
 
-There is an important typo here: the source currently uses **`searchTearm`**, not `searchTerm`. citeturn18view2 The README preserves that exact spelling so a developer following the setup instructions will not create an incompatible Appwrite attribute. It also explains that the field can be renamed, provided the source is changed at the same time.
+> **Note:** `searchTearm` is intentionally written this way because that is the field name currently used by the application. If it is renamed to `searchTerm`, the Appwrite schema and application code should both be updated.
 
-### Client-side environment security
+---
 
-The README also adds a warning that was missing from the starter document. Expo's current official environment-variable documentation states that variables prefixed with `EXPO_PUBLIC_` are embedded in the client bundle and explicitly warns against putting sensitive secrets in them. citeturn17view6
+## ▶️ Run the Application
 
-That is particularly relevant because the application's TMDB Bearer credential currently comes directly from `EXPO_PUBLIC_TMDB_API_KEY`. citeturn20view0 For a portfolio or learning application this may be an accepted tradeoff, but for a production architecture I would put the TMDB request behind a controlled backend/server function or API proxy rather than describe the variable as a protected secret.
-
-The README distinguishes between **configuration needed to run the repository as written** and **the stronger architecture advisable for production**.
-
-## Repository issues uncovered during the review
-
-The README rewrite also exposed several things worth fixing in the codebase itself.
-
-### The reset script appears stale
-
-`package.json` currently declares:
-
-```json
-"reset-project": "node ./scripts/reset-project.js"
-```
-
-citeturn18view1
-
-However, the repository's root file listing shows `app`, `assets`, `components`, `constants`, `interfaces`, `services`, and the configuration files, but no `scripts` directory. citeturn19view4
-
-The old README still instructs users to run:
+Start the Expo development server:
 
 ```bash
-npm run reset-project
+npx expo start
 ```
 
-and claims this will move starter code into `app-example`. citeturn18view0
+You can then run CINEMATE using:
 
-Because the repository no longer appears to contain the referenced reset script, I intentionally **did not carry that command into the new README**. Based on the current repository tree, keeping it in setup documentation would likely send users toward a broken command. This is an inference from the package script and current root tree rather than from executing the repository locally. citeturn18view1turn19view4
+- Android Emulator
+- iOS Simulator
+- Expo Go
+- Development Build
+- Web browser
 
-A cleaner `package.json` would therefore be:
+You can also use the npm scripts:
 
-```json
-"scripts": {
-  "start": "expo start",
-  "android": "expo start --android",
-  "ios": "expo start --ios",
-  "web": "expo start --web",
-  "lint": "expo lint"
-}
+```bash
+npm run android
+npm run ios
+npm run web
 ```
 
-unless you intend to restore `scripts/reset-project.js`.
+---
 
-### Surprise is accidentally labelled Watchlist
+## 🎯 How It Works
 
-The tab configuration defines the route as:
+CINEMATE retrieves entertainment data from **TMDB**.
 
-```tsx
-name="surprise"
-```
+When a user searches for a movie, the application queries TMDB and displays matching results.
 
-with screen title:
+Search activity is recorded using **Appwrite**. Repeated searches increase the search count for a movie, allowing CINEMATE to display trending titles based on what users are searching for.
 
-```tsx
-title: 'Surprise'
-```
+The **Discover** section provides another way to browse content without searching, while **Surprise Me** randomly selects something to watch.
 
-but its custom tab icon receives:
+---
 
-```tsx
-title="Watchlist"
-```
+## 🔐 Environment & Security
 
-citeturn18view3
+The current application uses Expo public environment variables for configuration.
 
-The screen itself is clearly a Surprise Me feature: it loads movies, television, and anime, allows a type to be selected, generates a random recommendation, and supports sharing. citeturn20view2
+Because `EXPO_PUBLIC_*` values are bundled with the client application, they should not be treated as private secrets.
 
-So this appears to be a leftover UI label rather than an actual watchlist implementation. I recommend changing:
+For a production application, sensitive API operations should ideally be handled through a backend service, serverless function, or secure API proxy.
 
-```tsx
-<TabIcon focused={focused} icon={icons.star} title="Watchlist" />
-```
+---
 
-to:
+## 🎥 TMDB Attribution
 
-```tsx
-<TabIcon focused={focused} icon={icons.star} title="Surprise" />
-```
+CINEMATE uses movie and television data provided by **The Movie Database (TMDB)**.
 
-That will make the navigation match both the route name and actual functionality. citeturn18view3turn20view2
+> This product uses the TMDB API but is not endorsed or certified by TMDB.
 
-### The Appwrite field name should eventually be cleaned up
+---
 
-As noted above, both the query and document creation use:
+## 🔮 Future Improvements
 
-```ts
-searchTearm
-```
+Possible improvements for CINEMATE include:
 
-citeturn18view2
+- ❤️ Favorite movies
+- 📋 Personal watchlists
+- 👤 User accounts
+- ⭐ User ratings
+- 🎭 More advanced recommendation algorithms
+- 🎞️ Movie trailers
+- 📝 Reviews
+- 🔔 New-release notifications
+- 🌙 Improved themes
+- 🤖 Personalized recommendations based on viewing preferences
 
-It works as long as the Appwrite schema uses exactly the same spelling, but `searchTerm` would be clearer. A safe migration would change the database attribute and both code references together:
+---
 
-```ts
-Query.equal('searchTerm', query)
-```
+## 🤝 Contributing
 
-and:
+Contributions are welcome.
 
-```ts
-{
-  searchTerm: query,
-  movie_id: movie.id,
-  title: movie.title,
-  count: 1,
-  poster_url: ...
-}
-```
+If you'd like to improve CINEMATE:
 
-Until that migration happens, documenting the existing typo is better than providing setup instructions that silently fail.
+1. Fork the repository
+2. Create a new branch
+3. Make your changes
+4. Commit your changes
+5. Push the branch
+6. Open a Pull Request
 
-### Some installed packages may deserve an audit
-
-For example, `@clerk/clerk-expo` is present in `package.json`. citeturn18view1 Since the README research focused on verified application behavior and I did not find sufficient evidence in the inspected navigation/application files to characterize user authentication as a functioning project feature, I did **not** advertise Clerk authentication in the rewritten README.
-
-That is the conservative documentation approach: dependencies should not automatically be presented as implemented user-facing functionality merely because they are installed.
-
-## Why this README is more appropriate
-
-The rewritten document now describes the repository as a real movie-discovery product rather than a freshly generated Expo project.
-
-The title uses **CINEMATE** because that is the name rendered by the current home screen. citeturn19view0 The feature section reflects what the code actually implements: popular content and user-search trends on Home, genre and decade-aware movie searching, Movie/TV/Anime discovery, and random recommendations. citeturn19view0turn19view1turn20view1turn20view2
-
-It also makes onboarding much more reproducible by providing the environment configuration that the source actually accesses instead of merely saying `npm install` and `npx expo start`. The TMDB and Appwrite requirements are evident directly in the application's API and database service code. citeturn20view0turn18view2
-
-Finally, the README includes TMDB attribution guidance. TMDB's official FAQ says non-commercial developer API use requires attribution, requires use of an approved TMDB logo, and requires the application to prominently state: **“This product uses the TMDB API but is not endorsed or certified by TMDB.”** It also says attribution should appear in an About/Credits-type section. citeturn17view5 That notice is therefore included in the generated README rather than treating TMDB merely as an undocumented data source.
-
-## Recommended final repository state
-
-The generated file is suitable to replace the root README now:
-
-**[Download the final `README.md`](sandbox:/mnt/data/README.md)**
-
-After replacing the existing file, I would make three small codebase cleanups alongside it: remove or restore the stale `reset-project` script, change the bottom-tab label from `Watchlist` to `Surprise`, and eventually migrate `searchTearm` to `searchTerm`. The first is supported by the mismatch between `package.json` and the repository root, the second by the tab and Surprise screen implementations, and the third by the Appwrite service itself. citeturn18view1turn19view4turn18view3turn20view2turn18view2
-
-Those fixes would bring the implementation and documentation into much closer alignment while preserving the project's current Expo, TMDB, and Appwrite architecture.
